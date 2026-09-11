@@ -1,0 +1,422 @@
+<title>Alfabetizador</title>
+<meta name="color-scheme" content="dark" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg: #0f1d14;
+    --surface: #17281c;
+    --surface-hover: #1e3324;
+    --border: #22392a;
+    --text: #edead9;
+    --text-dim: #8fa491;
+    --accent: #c8ff5c;
+    --accent-text: #0f1d14;
+    --warn: #f2b84b;
+    --danger: #e8836a;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Inter", system-ui, -apple-system, sans-serif;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    padding: 4rem 1.5rem 6rem;
+  }
+
+  main {
+    width: 100%;
+    max-width: 620px;
+  }
+
+  h1 {
+    font-family: "Fraunces", serif;
+    font-weight: 500;
+    font-size: 2.4rem;
+    letter-spacing: -0.01em;
+    margin: 0 0 0.35rem;
+  }
+
+  .subtitle {
+    color: var(--text-dim);
+    font-size: 0.95rem;
+    max-width: 46ch;
+    line-height: 1.5;
+    margin: 0 0 2rem;
+  }
+
+  form.loader {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 2.5rem;
+  }
+
+  input[type="text"] {
+    flex: 1;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    font: inherit;
+    padding: 0.75rem 0.9rem;
+  }
+
+  input[type="text"]::placeholder {
+    color: var(--text-dim);
+  }
+
+  input[type="text"]:focus-visible,
+  button:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  button {
+    font: inherit;
+    font-weight: 500;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--surface);
+    color: var(--text);
+    padding: 0.75rem 1.1rem;
+    cursor: pointer;
+  }
+
+  button:hover { background: var(--surface-hover); }
+
+  button:disabled {
+    opacity: 0.45;
+    cursor: default;
+  }
+
+  button.primary {
+    background: var(--accent);
+    color: var(--accent-text);
+    border-color: var(--accent);
+  }
+
+  button.primary:hover { filter: brightness(1.06); }
+
+  .actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    margin: 1.25rem 0 1rem;
+  }
+
+  .actions .group { display: flex; gap: 0.5rem; }
+
+  .status {
+    font-size: 0.85rem;
+    color: var(--text-dim);
+  }
+
+  .status.dirty { color: var(--warn); }
+  .status.error { color: var(--danger); }
+
+  ol.tracks {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    border-top: 1px solid var(--border);
+  }
+
+  li.track {
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+    padding: 0.65rem 0.25rem;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg);
+    transition: background 120ms ease, transform 120ms ease;
+  }
+
+  li.track.dragging { opacity: 0.35; }
+
+  li.track.drag-over {
+    background: var(--surface);
+    box-shadow: inset 0 2px 0 var(--accent);
+  }
+
+  .pos {
+    font-family: "Fraunces", serif;
+    font-variant-numeric: tabular-nums;
+    color: var(--text-dim);
+    width: 2.2rem;
+    text-align: right;
+    flex-shrink: 0;
+  }
+
+  .name {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .badge {
+    font-size: 0.72rem;
+    color: var(--warn);
+    border: 1px solid var(--warn);
+    border-radius: 4px;
+    padding: 0.1rem 0.4rem;
+    flex-shrink: 0;
+  }
+
+  .reorder-buttons { display: flex; gap: 0.15rem; flex-shrink: 0; }
+
+  .reorder-buttons button {
+    padding: 0.25rem 0.5rem;
+    border-color: transparent;
+    background: transparent;
+    line-height: 1;
+  }
+
+  .reorder-buttons button:hover { background: var(--surface-hover); }
+
+  .handle {
+    color: var(--text-dim);
+    cursor: grab;
+    flex-shrink: 0;
+    padding: 0 0.2rem;
+  }
+
+  .empty {
+    color: var(--text-dim);
+    border: 1px dashed var(--border);
+    border-radius: 8px;
+    padding: 2.5rem 1.5rem;
+    text-align: center;
+    line-height: 1.6;
+  }
+
+  .footnote {
+    margin-top: 1rem;
+    font-size: 0.82rem;
+    color: var(--warn);
+    line-height: 1.6;
+  }
+
+  [hidden] { display: none !important; }
+</style>
+
+<main>
+  <h1>Alfabetizador</h1>
+  <p class="subtitle">
+    Reordena as faixas de uma playlist por nome, ignorando um "The" no
+    inicio na hora de comparar. Arraste para ajustar manualmente antes
+    de salvar.
+  </p>
+
+  <form class="loader" id="loader-form">
+    <input
+      type="text"
+      id="playlist-input"
+      placeholder="Link ou ID da playlist"
+      autocomplete="off"
+    />
+    <button type="submit" id="load-button">Carregar</button>
+  </form>
+
+  <div id="empty-state" class="empty">
+    Cole o link de uma playlist sua acima para comecar.
+  </div>
+
+  <div id="playlist-view" hidden>
+    <div class="actions">
+      <div class="group">
+        <button type="button" id="sort-button">Ordenar A → Z</button>
+      </div>
+      <div class="group" style="align-items: center; display: flex; gap: 0.75rem;">
+        <span class="status" id="status-text"></span>
+        <button type="button" class="primary" id="save-button" disabled>Salvar no Spotify</button>
+      </div>
+    </div>
+
+    <ol class="tracks" id="track-list"></ol>
+
+    <p class="footnote" id="local-warning" hidden></p>
+  </div>
+</main>
+
+<script>
+  const loaderForm = document.getElementById("loader-form");
+  const playlistInput = document.getElementById("playlist-input");
+  const loadButton = document.getElementById("load-button");
+  const emptyState = document.getElementById("empty-state");
+  const playlistView = document.getElementById("playlist-view");
+  const trackList = document.getElementById("track-list");
+  const sortButton = document.getElementById("sort-button");
+  const saveButton = document.getElementById("save-button");
+  const statusText = document.getElementById("status-text");
+  const localWarning = document.getElementById("local-warning");
+
+  const state = { playlistId: null, tracks: [], dirty: false };
+  let dragIndex = null;
+
+  function sortKey(name) {
+    return name.replace(/^the\s+/i, "").trim();
+  }
+
+  function setStatus(text, kind) {
+    statusText.textContent = text;
+    statusText.className = "status" + (kind ? " " + kind : "");
+  }
+
+  function render() {
+    trackList.innerHTML = "";
+
+    state.tracks.forEach((track, index) => {
+      const li = document.createElement("li");
+      li.className = "track";
+      li.draggable = true;
+      li.dataset.index = String(index);
+
+      li.addEventListener("dragstart", () => {
+        dragIndex = index;
+        li.classList.add("dragging");
+      });
+      li.addEventListener("dragend", () => li.classList.remove("dragging"));
+      li.addEventListener("dragover", (e) => {
+        e.preventDefault();
+        li.classList.add("drag-over");
+      });
+      li.addEventListener("dragleave", () => li.classList.remove("drag-over"));
+      li.addEventListener("drop", (e) => {
+        e.preventDefault();
+        li.classList.remove("drag-over");
+        if (dragIndex === null || dragIndex === index) return;
+        moveTrack(dragIndex, index);
+        dragIndex = null;
+      });
+
+      const pos = document.createElement("span");
+      pos.className = "pos";
+      pos.textContent = String(index + 1);
+
+      const handle = document.createElement("span");
+      handle.className = "handle";
+      handle.textContent = "⠿";
+      handle.setAttribute("aria-hidden", "true");
+
+      const name = document.createElement("span");
+      name.className = "name";
+      name.textContent = track.name;
+      name.title = track.name;
+
+      const reorderButtons = document.createElement("span");
+      reorderButtons.className = "reorder-buttons";
+
+      const upButton = document.createElement("button");
+      upButton.type = "button";
+      upButton.textContent = "▲";
+      upButton.setAttribute("aria-label", `Mover "${track.name}" para cima`);
+      upButton.disabled = index === 0;
+      upButton.addEventListener("click", () => moveTrack(index, index - 1));
+
+      const downButton = document.createElement("button");
+      downButton.type = "button";
+      downButton.textContent = "▼";
+      downButton.setAttribute("aria-label", `Mover "${track.name}" para baixo`);
+      downButton.disabled = index === state.tracks.length - 1;
+      downButton.addEventListener("click", () => moveTrack(index, index + 1));
+
+      reorderButtons.append(upButton, downButton);
+
+      li.append(pos, handle, name);
+      if (track.isLocal) {
+        const badge = document.createElement("span");
+        badge.className = "badge";
+        badge.textContent = "arquivo local";
+        li.append(badge);
+      }
+      li.append(reorderButtons);
+
+      trackList.append(li);
+    });
+
+    const localCount = state.tracks.filter((t) => t.isLocal).length;
+    if (localCount > 0) {
+      localWarning.hidden = false;
+      localWarning.textContent =
+        `${localCount} faixa(s) local(is) encontrada(s). O Spotify pode nao reordena-las corretamente.`;
+    } else {
+      localWarning.hidden = true;
+    }
+
+    saveButton.disabled = !state.dirty;
+    if (state.dirty) setStatus("Alteracoes nao salvas", "dirty");
+  }
+
+  function moveTrack(from, to) {
+    const [moved] = state.tracks.splice(from, 1);
+    state.tracks.splice(to, 0, moved);
+    state.dirty = true;
+    render();
+  }
+
+  async function loadPlaylist(rawInput) {
+    setStatus("Carregando...");
+    loadButton.disabled = true;
+    try {
+      const response = await fetch(`/api/tracks?playlist=${encodeURIComponent(rawInput)}`);
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Falha ao carregar a playlist.");
+
+      state.playlistId = data.playlistId;
+      state.tracks = data.tracks;
+      state.dirty = false;
+
+      emptyState.hidden = true;
+      playlistView.hidden = false;
+      setStatus(`${state.tracks.length} faixa(s) carregada(s)`);
+      render();
+    } catch (err) {
+      setStatus(err.message, "error");
+    } finally {
+      loadButton.disabled = false;
+    }
+  }
+
+  loaderForm.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const value = playlistInput.value.trim();
+    if (value) loadPlaylist(value);
+  });
+
+  sortButton.addEventListener("click", () => {
+    state.tracks = [...state.tracks].sort((a, b) =>
+      sortKey(a.name).localeCompare(sortKey(b.name), undefined, { sensitivity: "base", numeric: true }),
+    );
+    state.dirty = true;
+    render();
+  });
+
+  saveButton.addEventListener("click", async () => {
+    setStatus("Salvando...");
+    saveButton.disabled = true;
+    try {
+      const response = await fetch("/api/save", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ playlistId: state.playlistId, uris: state.tracks.map((t) => t.uri) }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Falha ao salvar.");
+
+      state.dirty = false;
+      setStatus("Salvo no Spotify");
+      render();
+    } catch (err) {
+      setStatus(err.message, "error");
+      saveButton.disabled = false;
+    }
+  });
+</script>
