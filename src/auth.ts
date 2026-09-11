@@ -66,7 +66,7 @@ function waitForAuthorizationCode(port: number, expectedState: string): Promise<
       }
     });
 
-    server.listen(port);
+    server.listen(port, "127.0.0.1");
   });
 }
 

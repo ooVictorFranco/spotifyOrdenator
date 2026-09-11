@@ -95,7 +95,10 @@ async function main(): Promise<void> {
   console.log("Autenticando...");
   await getAccessToken();
 
-  server.listen(PORT, () => {
+  // Sem host explicito, o Node faz bind em todas as interfaces
+  // (0.0.0.0/::), expondo a UI (sem autenticacao propria) para
+  // qualquer dispositivo na mesma rede local.
+  server.listen(PORT, "127.0.0.1", () => {
     const url = `http://127.0.0.1:${PORT}`;
     console.log(`Interface disponivel em ${url}`);
     exec(`open "${url}"`);
